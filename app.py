@@ -14,5 +14,32 @@ debug = DebugToolbarExtension(app)
 connect_db(app)
 
 @app.route('/')
-def home_page():
-    return render_template('home.html')
+def list_pets():
+    """List pets in db."""
+    petList = Pet.query.all()
+    return render_template('list.html', pets=petList)
+
+@app.route('/<int:pet_id>')
+def show_pet(pet_id):
+    """Show details about a pet."""
+    return render_template('details.html', pet=Pet.query.get_or_404(pet_id))
+
+@app.route('/', methods=['POST'])
+def add_pet():
+    """Add a pet to the db."""
+    name = request.form['name']
+    species = request.form['species']
+    hunger = request.form['hunger']
+    hunger = int(hunger) if hunger else None
+
+    newPet = Pet(name=name, species=species, hunger=hunger)
+    db.session.add(newPet)
+    db.session.commit()
+
+    return redirect(f'/{newPet.id}')
+
+@app.route('/species/<string:species>')
+def show_species(species):
+    """Show pets of a species."""
+    pets = Pet.get_by_species(species)
+    return render_template('species.html', pets=pets, species=species)
